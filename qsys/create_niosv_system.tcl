@@ -4,9 +4,10 @@
 #   qsys-script --script=create_niosv_system.tcl
 #   qsys-generate niosv_system.qsys -- Quartus
 #
-# The system intentionally uses on-chip memory for first bring-up.  A later
-# application can replace the memory with an Avalon-MM SDRAM bridge without
-# changing the exported board-level PIO interfaces.
+# The processor uses tightly coupled memories for deterministic FPGA-only
+# execution.  The AXI peripheral master is not bridged to the Avalon-MM
+# peripherals below yet; those interfaces are retained as board-level
+# conduits for the next integration step.
 
 package require -exact qsys 25.1
 

@@ -1,8 +1,8 @@
 //======================================================================================================
-// A GHRD for QMTECH Cyclone 5 SoC NANO Board, with Dual SDRAM chips
+// QMTECH Cyclone V SoC KFB board with dual SDRAM and FPGA-side Nios V/g
 //======================================================================================================
 
-module qmtech_c5soc_kfb_dual_sdram_ghrd(
+module qmtech_c5soc_kfb_niosv_codesign(
 
 	// ============= CLOCKs ===================
 	input               FPGA_CLK1_50,

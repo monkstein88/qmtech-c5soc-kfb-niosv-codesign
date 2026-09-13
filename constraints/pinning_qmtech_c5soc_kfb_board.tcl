@@ -4,7 +4,7 @@
 
 set_global_assignment -name FAMILY "Cyclone V"
 set_global_assignment -name DEVICE 5CSEMA6U23I7
-set_global_assignment -name TOP_LEVEL_ENTITY qmtech_c5soc_kfb_dual_sdram_ghrd
+set_global_assignment -name TOP_LEVEL_ENTITY qmtech_c5soc_kfb_niosv_codesign
 set_global_assignment -name DEVICE_FILTER_PACKAGE UFBGA
 set_global_assignment -name DEVICE_FILTER_PIN_COUNT 672
 set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 7
@@ -22,7 +22,7 @@ set_global_assignment -name OCP_HW_EVAL DISABLE
 #============================================================
 # The schematic labels these board oscillators SYS_CLK3_50M (V11),
 # SYS_CLK2_50M (Y13), and SYS_CLK1_50M (E11), respectively.  The
-# FPGA_CLK* names are the HDL ports and intentionally preserve the GHRD API.
+# FPGA_CLK* names match the board-level HDL ports.
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FPGA_CLK1_50
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FPGA_CLK2_50
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FPGA_CLK3_50
