@@ -1,0 +1,30 @@
+# Quartus project outputs
+quartus/db/
+quartus/incremental_db/
+quartus/output_files/
+quartus/*.bak
+quartus/*.rpt
+quartus/*.summary
+quartus/*.smsg
+quartus/*.qws
+quartus/*.sof
+quartus/*.rbf
+
+# Platform Designer generated output
+qsys/niosv_system/
+qsys/soc_system/
+qsys/niosv_system.qsys
+qsys/niosv_system.sopcinfo
+qsys/.qsys_edit/
+
+# Simulation and tool-generated temporary files
+simulation/
+*.log
+*.jdi
+*.pin
+*.qdf
+*.qdb
+*.qor
+*.rdb
+*.vcd
+*.wlf
