@@ -9,12 +9,12 @@ quartus/*.smsg
 quartus/*.qws
 quartus/*.sof
 quartus/*.rbf
+quartus/.qsys_edit/
 
 # Platform Designer generated output
 qsys/niosv_system/
 qsys/soc_system/
-qsys/niosv_system.qsys
-qsys/niosv_system.sopcinfo
+qsys/soc_system.sopcinfo
 qsys/.qsys_edit/
 
 # Simulation and tool-generated temporary files
@@ -26,5 +26,6 @@ simulation/
 *.qdb
 *.qor
 *.rdb
+*.sopcinfo
 *.vcd
 *.wlf
