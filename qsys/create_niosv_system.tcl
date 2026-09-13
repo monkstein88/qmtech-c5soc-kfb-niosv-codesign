@@ -15,7 +15,7 @@ create_system niosv_system
 set_project_property DEVICE_FAMILY "Cyclone V"
 set_project_property DEVICE 5CSEMA6U23I7
 
-add_instance clk altera_avalon_clock_source 25.1
+add_instance clk altera_clock_bridge 25.1
 
 add_instance rst altera_reset_controller 25.1
 set_instance_parameter_value rst {NUM_RESET_INPUTS} {1}
@@ -44,12 +44,12 @@ add_instance pio_button altera_avalon_pio 25.1
 set_instance_parameter_value pio_button {direction} {Input}
 set_instance_parameter_value pio_button {width} {2}
 
-add_connection clk.clk rst.clk
-add_connection clk.clk cpu.clk
-add_connection clk.clk jtag_uart.clk
-add_connection clk.clk pio_led.clk
-add_connection clk.clk pio_dipsw.clk
-add_connection clk.clk pio_button.clk
+add_connection clk.out_clk rst.clk
+add_connection clk.out_clk cpu.clk
+add_connection clk.out_clk jtag_uart.clk
+add_connection clk.out_clk pio_led.clk
+add_connection clk.out_clk pio_dipsw.clk
+add_connection clk.out_clk pio_button.clk
 add_interface reset_reset_n reset end
 set_interface_property reset_reset_n EXPORT_OF rst.reset_in0
 add_connection rst.reset_out cpu.reset
@@ -64,6 +64,6 @@ set_interface_property pio_dipsw_export EXPORT_OF pio_dipsw.external_connection
 add_interface pio_button_export conduit end
 set_interface_property pio_button_export EXPORT_OF pio_button.external_connection
 add_interface clk_clk clock end
-set_interface_property clk_clk EXPORT_OF clk.clk
+set_interface_property clk_clk EXPORT_OF clk.in_clk
 
 save_system niosv_system.qsys

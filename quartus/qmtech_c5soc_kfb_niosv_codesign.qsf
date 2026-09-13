@@ -42,8 +42,8 @@ set_global_assignment -name DEVICE 5CSEMA6U23I7
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 25.1STD.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "01:04:35  APRIL 05, 2026"
 set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Standard Edition"
-set_global_assignment -name QSYS_FILE ../qsys/soc_system.qsys
-set_global_assignment -name QSYS_FILE ../qsys/niosv_system.qsys
+set_global_assignment -name QIP_FILE ../qsys/soc_system/synthesis/soc_system.qip
+set_global_assignment -name QIP_FILE ../qsys/niosv_system/synthesis/niosv_system.qip
 set_global_assignment -name QIP_FILE ../ip/altsource_probe/hps_reset.qip
 set_global_assignment -name VERILOG_FILE ../ip/debounce/debounce.v
 set_global_assignment -name VERILOG_FILE ../ip/edge_detect/altera_edge_detector.v

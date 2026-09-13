@@ -2,6 +2,9 @@
 quartus/db/
 quartus/incremental_db/
 quartus/output_files/
+quartus/hps_isw_handoff/
+quartus/c5_pin_model_dump.txt
+quartus/hps_sdram_p0_summary.csv
 quartus/*.bak
 quartus/*.rpt
 quartus/*.summary

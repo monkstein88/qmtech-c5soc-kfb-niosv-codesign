@@ -86,7 +86,7 @@
  <parameter name="timeStamp" value="0" />
  <parameter name="useTestBenchNamingPattern" value="false" />
  <instanceScript></instanceScript>
- <interface name="clk_clk" internal="clk.clk" type="clock" dir="start" />
+ <interface name="clk_clk" internal="clk.in_clk" type="clock" dir="end" />
  <interface
    name="pio_button_export"
    internal="pio_button.external_connection"
@@ -103,13 +103,10 @@
    type="conduit"
    dir="end" />
  <interface name="reset_reset_n" internal="rst.reset_in0" type="reset" dir="end" />
- <module
-   name="clk"
-   kind="altera_avalon_clock_source"
-   version="25.1"
-   enabled="1">
-  <parameter name="CLOCK_RATE" value="10" />
-  <parameter name="CLOCK_UNIT" value="1000000" />
+ <module name="clk" kind="altera_clock_bridge" version="25.1" enabled="1">
+  <parameter name="DERIVED_CLOCK_RATE" value="0" />
+  <parameter name="EXPLICIT_CLOCK_RATE" value="0" />
+  <parameter name="NUM_CLOCK_OUTPUTS" value="1" />
  </module>
  <module name="cpu" kind="intel_niosv_g" version="4.0.0" enabled="1">
   <parameter name="AUTO_CLK_CLOCK_DOMAIN" value="1" />
@@ -263,12 +260,12 @@
   <parameter name="USE_RESET_REQUEST_IN9" value="0" />
   <parameter name="USE_RESET_REQUEST_INPUT" value="0" />
  </module>
- <connection kind="clock" version="25.1" start="clk.clk" end="rst.clk" />
- <connection kind="clock" version="25.1" start="clk.clk" end="cpu.clk" />
- <connection kind="clock" version="25.1" start="clk.clk" end="jtag_uart.clk" />
- <connection kind="clock" version="25.1" start="clk.clk" end="pio_led.clk" />
- <connection kind="clock" version="25.1" start="clk.clk" end="pio_dipsw.clk" />
- <connection kind="clock" version="25.1" start="clk.clk" end="pio_button.clk" />
+ <connection kind="clock" version="25.1" start="clk.out_clk" end="rst.clk" />
+ <connection kind="clock" version="25.1" start="clk.out_clk" end="cpu.clk" />
+ <connection kind="clock" version="25.1" start="clk.out_clk" end="jtag_uart.clk" />
+ <connection kind="clock" version="25.1" start="clk.out_clk" end="pio_led.clk" />
+ <connection kind="clock" version="25.1" start="clk.out_clk" end="pio_dipsw.clk" />
+ <connection kind="clock" version="25.1" start="clk.out_clk" end="pio_button.clk" />
  <connection kind="reset" version="25.1" start="rst.reset_out" end="cpu.reset" />
  <connection
    kind="reset"

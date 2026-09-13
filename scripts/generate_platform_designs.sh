@@ -15,9 +15,9 @@ command -v qsys-generate >/dev/null 2>&1 || {
 
 cd "$qsys_dir"
 export QUARTUS_ROOTDIR=/opt/altera/25.1std/quartus
-qsys-script --search-path="/opt/altera/25.1std/ip/altera/soft_processor/intel_niosv_g,$,/opt/altera/25.1std/ip/altera" \
+qsys-script --search-path="/opt/altera/25.1std/ip/altera/soft_processor/intel_niosv_g,/opt/altera/25.1std/ip/altera/merlin,$,/opt/altera/25.1std/ip/altera" \
     --script=create_niosv_system.tcl
 qsys-generate soc_system.qsys --synthesis --output-directory=soc_system \
-    --search-path="/opt/altera/25.1std/ip/altera/soft_processor/intel_niosv_g,$,/opt/altera/25.1std/ip/altera"
+    --search-path="/opt/altera/25.1std/ip/altera/soft_processor/intel_niosv_g,/opt/altera/25.1std/ip/altera/merlin,$,/opt/altera/25.1std/ip/altera"
 qsys-generate niosv_system.qsys --synthesis --output-directory=niosv_system \
-    --search-path="/opt/altera/25.1std/ip/altera/soft_processor/intel_niosv_g,$,/opt/altera/25.1std/ip/altera"
+    --search-path="/opt/altera/25.1std/ip/altera/soft_processor/intel_niosv_g,/opt/altera/25.1std/ip/altera/merlin,$,/opt/altera/25.1std/ip/altera"
