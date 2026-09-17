@@ -16,6 +16,7 @@ localparam SIGNAL_DEASSERT = EDGE_TYPE ? 1'b0 : 1'b1;
 reg [1:0] state, next_state;
 reg       pulse_detect;
 wire      busy_pulsing;
+wire      reset_qual_n;
 
 assign busy_pulsing = (IGNORE_RST_WHILE_BUSY)? pulse_out : 1'b0;
 assign reset_qual_n = rst_n | busy_pulsing;

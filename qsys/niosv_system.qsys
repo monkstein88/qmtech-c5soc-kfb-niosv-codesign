@@ -7,7 +7,7 @@
    description=""
    tags=""
    categories="" />
- <parameter name="bonusData"><![CDATA[bonusData
+ <parameter name="bonusData"><![CDATA[bonusData 
 {
    element clk
    {
@@ -105,7 +105,7 @@
  <interface name="reset_reset_n" internal="rst.reset_in0" type="reset" dir="end" />
  <module name="clk" kind="altera_clock_bridge" version="25.1" enabled="1">
   <parameter name="DERIVED_CLOCK_RATE" value="0" />
-  <parameter name="EXPLICIT_CLOCK_RATE" value="0" />
+  <parameter name="EXPLICIT_CLOCK_RATE" value="50000000" />
   <parameter name="NUM_CLOCK_OUTPUTS" value="1" />
  </module>
  <module name="cpu" kind="intel_niosv_g" version="4.0.0" enabled="1">
@@ -122,13 +122,13 @@
   <parameter name="alignCLICVectorTable" value="8" />
   <parameter name="basicInterruptMode" value="0" />
   <parameter name="basicShadowRegisterFiles" value="0" />
-  <parameter name="clockFrequency" value="0" />
-  <parameter name="dataCacheSize" value="4096" />
-  <parameter name="dataSlaveMapParam" value="" />
+  <parameter name="clockFrequency" value="50000000" />
+  <parameter name="dataCacheSize" value="0" />
+  <parameter name="dataSlaveMapParam"><![CDATA[<address-map><slave name='cpu.instruction_tcs1' start='0x0' end='0x20000' type='intel_niosv_g.instruction_tcs1' /><slave name='cpu.dm_agent' start='0x10000000' end='0x10010000' type='intel_niosv_g.dm_agent' /><slave name='cpu.timer_sw_agent' start='0x10010000' end='0x10010040' type='intel_niosv_g.timer_sw_agent' /><slave name='jtag_uart.avalon_jtag_slave' start='0x10020000' end='0x10020008' type='altera_avalon_jtag_uart.avalon_jtag_slave' /><slave name='pio_led.s1' start='0x10030000' end='0x10030010' type='altera_avalon_pio.s1' /><slave name='pio_dipsw.s1' start='0x10030010' end='0x10030020' type='altera_avalon_pio.s1' /><slave name='pio_button.s1' start='0x10030020' end='0x10030030' type='altera_avalon_pio.s1' /><slave name='cpu.data_tcs1' start='0x20000000' end='0x20008000' type='intel_niosv_g.data_tcs1' /></address-map>]]></parameter>
   <parameter name="deviceFamily" value="Cyclone V" />
   <parameter name="disableFsqrtFdiv" value="false" />
   <parameter name="dtcm1Base" value="536870912" />
-  <parameter name="dtcm1InitFile" value="" />
+  <parameter name="dtcm1InitFile">../software/build/firmware/niosvdtcm1.hex</parameter>
   <parameter name="dtcm1Size" value="32768" />
   <parameter name="dtcm2Base" value="0" />
   <parameter name="dtcm2InitFile" value="" />
@@ -150,10 +150,10 @@
   <parameter name="funct7_l" value="" />
   <parameter name="funct7_u" value="" />
   <parameter name="hartId" value="0" />
-  <parameter name="instCacheSize" value="4096" />
-  <parameter name="instSlaveMapParam" value="" />
+  <parameter name="instCacheSize" value="0" />
+  <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='cpu.instruction_tcs1' start='0x0' end='0x20000' type='intel_niosv_g.instruction_tcs1' /><slave name='cpu.dm_agent' start='0x10000000' end='0x10010000' type='intel_niosv_g.dm_agent' /></address-map>]]></parameter>
   <parameter name="itcm1Base" value="0" />
-  <parameter name="itcm1InitFile" value="" />
+  <parameter name="itcm1InitFile">../software/build/firmware/niosvitcm1.hex</parameter>
   <parameter name="itcm1Size" value="131072" />
   <parameter name="itcm2Base" value="0" />
   <parameter name="itcm2InitFile" value="" />
@@ -179,7 +179,7 @@
    enabled="1">
   <parameter name="allowMultipleConnections" value="false" />
   <parameter name="avalonSpec" value="2.0" />
-  <parameter name="clkFreq" value="0" />
+  <parameter name="clkFreq" value="50000000" />
   <parameter name="hubInstanceID" value="0" />
   <parameter name="printingMethod" value="false" />
   <parameter name="readBufferDepth" value="1024" />
@@ -196,7 +196,7 @@
   <parameter name="bitClearingEdgeCapReg" value="false" />
   <parameter name="bitModifyingOutReg" value="false" />
   <parameter name="captureEdge" value="false" />
-  <parameter name="clockRate" value="0" />
+  <parameter name="clockRate" value="50000000" />
   <parameter name="direction" value="Input" />
   <parameter name="edgeType" value="RISING" />
   <parameter name="generateIRQ" value="false" />
@@ -210,7 +210,7 @@
   <parameter name="bitClearingEdgeCapReg" value="false" />
   <parameter name="bitModifyingOutReg" value="false" />
   <parameter name="captureEdge" value="false" />
-  <parameter name="clockRate" value="0" />
+  <parameter name="clockRate" value="50000000" />
   <parameter name="direction" value="Input" />
   <parameter name="edgeType" value="RISING" />
   <parameter name="generateIRQ" value="false" />
@@ -224,7 +224,7 @@
   <parameter name="bitClearingEdgeCapReg" value="false" />
   <parameter name="bitModifyingOutReg" value="false" />
   <parameter name="captureEdge" value="false" />
-  <parameter name="clockRate" value="0" />
+  <parameter name="clockRate" value="50000000" />
   <parameter name="direction" value="Output" />
   <parameter name="edgeType" value="RISING" />
   <parameter name="generateIRQ" value="false" />
@@ -260,12 +260,109 @@
   <parameter name="USE_RESET_REQUEST_IN9" value="0" />
   <parameter name="USE_RESET_REQUEST_INPUT" value="0" />
  </module>
+ <connection
+   kind="avalon"
+   version="25.1"
+   start="cpu.data_manager"
+   end="jtag_uart.avalon_jtag_slave">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x10020000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="25.1"
+   start="cpu.data_manager"
+   end="cpu.data_tcs1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x20000000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="25.1"
+   start="cpu.data_manager"
+   end="cpu.dm_agent">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x10000000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="25.1"
+   start="cpu.data_manager"
+   end="cpu.instruction_tcs1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="25.1"
+   start="cpu.data_manager"
+   end="pio_led.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x10030000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="25.1"
+   start="cpu.data_manager"
+   end="pio_dipsw.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x10030010" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="25.1"
+   start="cpu.data_manager"
+   end="pio_button.s1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x10030020" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="25.1"
+   start="cpu.data_manager"
+   end="cpu.timer_sw_agent">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x10010000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="25.1"
+   start="cpu.instruction_manager"
+   end="cpu.dm_agent">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x10000000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
+ <connection
+   kind="avalon"
+   version="25.1"
+   start="cpu.instruction_manager"
+   end="cpu.instruction_tcs1">
+  <parameter name="arbitrationPriority" value="1" />
+  <parameter name="baseAddress" value="0x0000" />
+  <parameter name="defaultConnection" value="false" />
+ </connection>
  <connection kind="clock" version="25.1" start="clk.out_clk" end="rst.clk" />
  <connection kind="clock" version="25.1" start="clk.out_clk" end="cpu.clk" />
  <connection kind="clock" version="25.1" start="clk.out_clk" end="jtag_uart.clk" />
  <connection kind="clock" version="25.1" start="clk.out_clk" end="pio_led.clk" />
  <connection kind="clock" version="25.1" start="clk.out_clk" end="pio_dipsw.clk" />
  <connection kind="clock" version="25.1" start="clk.out_clk" end="pio_button.clk" />
+ <connection
+   kind="interrupt"
+   version="25.1"
+   start="cpu.platform_irq_rx"
+   end="jtag_uart.irq">
+  <parameter name="irqNumber" value="0" />
+ </connection>
  <connection kind="reset" version="25.1" start="rst.reset_out" end="cpu.reset" />
  <connection
    kind="reset"

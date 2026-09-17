@@ -20,6 +20,9 @@ qsys/soc_system/
 qsys/soc_system.sopcinfo
 qsys/.qsys_edit/
 
+# Nios V BSP, firmware and TCM initialization files (scripts/build_firmware.sh)
+software/build/
+
 # Simulation and tool-generated temporary files
 simulation/
 *.log

@@ -1,4 +1,4 @@
-# Terasic DE0-NANO Board Timing Contraints File (.sdc)
+# QMTECH Cyclone V SoC KFB Board Timing Constraints File (.sdc)
 #**************************************************************
 # Time Information
 #**************************************************************
@@ -51,11 +51,25 @@ derive_clock_uncertainty
 #**************************************************************
 # Set Clock Groups
 #**************************************************************
+# Board oscillators (QMTECH schematic, sheet 5):
+#   Y4 drives SYS_CLK3_50M -> FPGA_CLK1_50 (V11) and SYS_CLK2_50M -> FPGA_CLK2_50 (Y13)
+#   Y3 drives SYS_CLK1_50M -> FPGA_CLK3_50 (E11)
+# Clocks from different oscillators are asynchronous.  FPGA_CLK1_50 and
+# FPGA_CLK2_50 share an oscillator but have no defined board skew, so do not
+# rely on synchronous transfers between them either.
+set_clock_groups -asynchronous \
+    -group [get_clocks {FPGA_CLK1_50 FPGA_CLK2_50}] \
+    -group [get_clocks {FPGA_CLK3_50}]
 
 
 #**************************************************************
 # Set False Path
 #**************************************************************
+# Push-buttons and DIP switches are asynchronous; they are re-timed by the
+# two-stage input synchronizers in the top level
+set_false_path -from [get_ports {KEY[*] DIPSW[*]}]
+# The user LED has no timing relationship to the board
+set_false_path -to [get_ports {LED}]
 
 
 #**************************************************************

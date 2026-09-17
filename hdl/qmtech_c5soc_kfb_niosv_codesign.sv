@@ -79,7 +79,19 @@ module qmtech_c5soc_kfb_niosv_codesign(
 //  LOGIC/WIRE declarations
 //=======================================================
 wire           hps_fpga_reset_n;
-wire  [ 1: 0]  fpga_debounced_buttons; // [0] - KEY[0] ; [1] - KEY[1]
+reg   [ 3: 0]  fpga_por_sr = 4'b0000;  // FPGA power-on reset shift register (see below)
+wire           fpga_reset_n;           // FPGA-local reset, independent of the HPS
+// Two-stage synchronizers for the asynchronous board inputs (KEY is active-low,
+// so its stages power up in the released state)
+(* altera_attribute = "-name SYNCHRONIZER_IDENTIFICATION FORCED_IF_ASYNCHRONOUS; -name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON" *)
+reg   [ 1: 0]  key_meta   = 2'b11;
+(* altera_attribute = "-name SYNCHRONIZER_IDENTIFICATION FORCED_IF_ASYNCHRONOUS; -name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON" *)
+reg   [ 1: 0]  key_sync   = 2'b11;
+(* altera_attribute = "-name SYNCHRONIZER_IDENTIFICATION FORCED_IF_ASYNCHRONOUS; -name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON" *)
+reg   [ 3: 0]  dipsw_meta = 4'b0000;
+(* altera_attribute = "-name SYNCHRONIZER_IDENTIFICATION FORCED_IF_ASYNCHRONOUS; -name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON" *)
+reg   [ 3: 0]  dipsw_sync = 4'b0000;
+wire  [ 1: 0]  fpga_debounced_buttons; // [0] - KEY[0] ; [1] - KEY[1] (active-low)
 wire           fpga_led_internal;
 wire           niosv_led;
 wire  [ 2: 0]  hps_reset_req; // [0] - HPS cold reset; [1] - HPS warm reset; [2] - HPS debug reset
@@ -89,9 +101,9 @@ wire           hps_debug_reset;
 wire  [27: 0]  stm_hw_events;
 wire           fpga_clk_50;
 // connection to internal logics
-assign LED         = niosv_led; // the FPGA-side Nios V owns the user LED
+assign LED         = niosv_led; // the FPGA-side Nios V owns the user LED (software/app/main.c)
 assign fpga_clk_50 = FPGA_CLK1_50;
-assign stm_hw_events = {{21{1'b0}}, DIPSW, fpga_led_internal, fpga_debounced_buttons}; // This is active-high input
+assign stm_hw_events = {{21{1'b0}}, dipsw_sync, fpga_led_internal, fpga_debounced_buttons}; // This is active-high input
 
 
 //=======================================================
@@ -188,19 +200,38 @@ soc_system HPS_SOPC_INST(
   // FPGA Partition:
   .button_pio_ext_export       (fpga_debounced_buttons), //   cv_soc_button_pio_ext.export
   .led_pio_ext_export          (fpga_led_internal),      //      cv_soc_led_pio_ext.export
-  .dipsw_pio_ext_export        (DIPSW)                   //    cv_soc_dipsw_pio_ext.export
+  .dipsw_pio_ext_export        (dipsw_sync)              //    cv_soc_dipsw_pio_ext.export
 );
 
+// The FPGA-side Nios V runs from its own reset so that it starts right after
+// FPGA configuration and is not reset by HPS cold/warm/debug resets.
 niosv_system NIOSV_INST(
   .clk_clk_clk                 (fpga_clk_50),
-  .reset_reset_n_reset         (hps_fpga_reset_n),
+  .reset_reset_n_reset         (fpga_reset_n),
   .pio_led_export_export       (niosv_led),
-  .pio_dipsw_export_export     (DIPSW),
-  .pio_button_export_export    (KEY)
+  .pio_dipsw_export_export     (dipsw_sync),
+  .pio_button_export_export    (fpga_debounced_buttons)
 );
 
-// Debounce logic to clean out glitches within 1 [ms]
-debounce 
+// FPGA power-on reset: registers initialize to zero at configuration, so
+// fpga_reset_n is held low for four clock cycles and then released
+// synchronously to fpga_clk_50.
+always @(posedge fpga_clk_50)
+  fpga_por_sr <= {fpga_por_sr[2:0], 1'b1};
+
+assign fpga_reset_n = fpga_por_sr[3];
+
+// Board input synchronizers
+always @(posedge fpga_clk_50) begin
+  key_meta   <= KEY;
+  key_sync   <= key_meta;
+  dipsw_meta <= DIPSW;
+  dipsw_sync <= dipsw_meta;
+end
+
+// Debounce logic to clean out glitches within 1 [ms]; the debounced buttons
+// feed both the HPS and the Nios V button PIOs.
+debounce
 #(
   .WIDTH(2),
   .POLARITY("LOW"),
@@ -208,8 +239,8 @@ debounce
   .TIMEOUT_WIDTH(16) // ceil(log2(TIMEOUT))
 )DEBOUNCE_INST(
   .clk(fpga_clk_50),
-  .reset_n(hps_fpga_reset_n),
-  .data_in(KEY),
+  .reset_n(fpga_reset_n),
+  .data_in(key_sync),
   .data_out(fpga_debounced_buttons)
 );
 
@@ -257,24 +288,5 @@ altera_edge_detector
   .signal_in(hps_reset_req[2]),
   .pulse_out(hps_debug_reset)
 );
-
-// A simple LED counter, that will blink a single LED - hearbeat 
-// logic [25: 0] counter;
-// logic led_level;
-// always @(posedge fpga_clk_50 or negedge hps_fpga_reset_n) begin
-//     if (~hps_fpga_reset_n) begin
-//         counter <= 0;
-//         led_level <= 0;
-//     end
-//
-//     else if (counter == 24999999) begin
-//         counter <= 0;
-//         led_level <= ~led_level;
-//     end
-//     else
-//         counter <= counter + 1'b1;
-// end
-
-// assign LED = led_level;
 
 endmodule
