@@ -26,6 +26,7 @@ software/build/
 
 # Simulation and tool-generated temporary files
 simulation/
+gdbopxdriscv.ini
 *.log
 *.jdi
 *.pin

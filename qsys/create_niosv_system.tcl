@@ -60,7 +60,12 @@ set dtcm_init_file ../software/build/firmware/niosvdtcm1.hex
 set itcm_base 0x00000000
 set dtcm_base 0x20000000
 
-# Board clock and Nios V system clock, in MHz.
+# Board clock and Nios V system clock, in MHz.  100 MHz is close to what the
+# Nios V/g core closes at on this device: across fits the critical path (the
+# debug module CSR memory feeding the core's branch prediction) has landed
+# anywhere between about 93 and 105 MHz.  The Quartus project therefore asks
+# the fitter for extra effort; see the physical synthesis settings in
+# quartus/qmtech_c5soc_kfb_niosv_codesign.qsf.
 set refclk_mhz 50.0
 set sysclk_mhz 100.0
 

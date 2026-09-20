@@ -57,8 +57,13 @@ derive_clock_uncertainty
 # Clocks from different oscillators are asynchronous.  FPGA_CLK1_50 and
 # FPGA_CLK2_50 share an oscillator but have no defined board skew, so do not
 # rely on synchronous transfers between them either.
+#
+# The Nios V system PLL is driven by FPGA_CLK1_50, so its generated clocks
+# belong in the same group: transfers between FPGA_CLK1_50 and the Nios V
+# domain (the synchronized DIP switches and debounced buttons feeding the
+# PIOs) must stay analyzed rather than cut.
 set_clock_groups -asynchronous \
-    -group [get_clocks {FPGA_CLK1_50 FPGA_CLK2_50}] \
+    -group [get_clocks {FPGA_CLK1_50 FPGA_CLK2_50 *clk_pll*}] \
     -group [get_clocks {FPGA_CLK3_50}]
 
 

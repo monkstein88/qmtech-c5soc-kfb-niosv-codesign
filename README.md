@@ -185,12 +185,15 @@ quartus_asm qmtech_c5soc_kfb_niosv_codesign
 
 ## Run and debug
 
-The Cyclone V SoC JTAG chain contains the HPS (device 1) and the FPGA
-(device 2); check with `jtagconfig`.  Program the FPGA:
+The Cyclone V SoC JTAG chain contains the HPS (`SOCVHPS`) and the FPGA
+(`5CSEMA6`); list it with `jtagconfig`.  Program the FPGA:
 
 ```sh
-quartus_pgm -m jtag -o "p;quartus/output_files/qmtech_c5soc_kfb_niosv_codesign.sof@2"
+quartus_pgm -c 1 -m jtag -o "p;quartus/output_files/qmtech_c5soc_kfb_niosv_codesign.sof@2"
 ```
+
+Note that `quartus_pgm` counts devices from 1 (the FPGA is `@2`), while
+`niosv-download` counts from 0 (`--device=1 --instance=0` for the same FPGA).
 
 The bring-up firmware (`software/app/main.c`) then runs immediately:
 
@@ -199,19 +202,24 @@ The bring-up firmware (`software/app/main.c`) then runs immediately:
 - holding `KEY[0]` forces the LED on, holding `KEY[1]` forces it off;
 - switch and button changes are printed on the Nios V JTAG UART.
 
-The design contains two JTAG UARTs (HPS system and Nios V system).  List the
-JTAG nodes with `jtagconfig -n` and connect to the Nios V one by its instance
-number:
+The JTAG UART console and the debugger need a probe that the Nios V tools
+support: USB-Blaster II, Opella-XD, Opella-LD, HS2 or Vitra-XS.  A
+USB-Blaster I (or a clone of one) configures the FPGA correctly, but the
+Ashling GDB server refuses it and `juart-terminal` drops with I/O errors.
+
+With a supported probe: the design contains two JTAG UARTs (HPS system and
+Nios V system), so list the JTAG nodes with `jtagconfig -n` and connect to the
+Nios V one by its instance number:
 
 ```sh
-juart-terminal -d 2 -i <instance>
+juart-terminal -c 1 -d 2 -i <instance>
 ```
 
 To download and run a new firmware build over JTAG without reprogramming the
 FPGA:
 
 ```sh
-niosv-download -r -g software/build/firmware/niosv_app.elf
+niosv-download -c 1 -d 1 -i 0 -r -g software/build/firmware/niosv_app.elf
 ```
 
 ## Verification status
@@ -228,7 +236,7 @@ was run on Quartus Prime Standard 25.1 with the device set to
 | Timing Analyzer | Successful |
 | EDA Netlist Writer | Successful |
 
-Resources: 6,934 / 41,910 ALMs (17%), 9,002 registers, 170 / 553 RAM blocks
+Resources: 6,893 / 41,910 ALMs (16%), 8,942 registers, 170 / 553 RAM blocks
 (31%), 4 / 112 DSP blocks, 1 / 6 PLLs, 127 / 314 pins.
 
 Timing is met on every clock in all corners.  Worst case setup slack at
@@ -236,9 +244,9 @@ Slow 1100 mV 85 C:
 
 | Clock | Slack | Fmax |
 | --- | ---: | ---: |
-| Nios V `clk_pll` output (100 MHz) | +0.521 ns | 105.5 MHz |
+| Nios V `clk_pll` output (100 MHz) | +0.265 ns | 102.7 MHz |
 | HPS DDR3 `afi_clk` | +1.577 ns | |
-| `FPGA_CLK1_50` (50 MHz) | +7.595 ns | 80.6 MHz |
+| `FPGA_CLK1_50` (50 MHz) | +7.652 ns | 81.0 MHz |
 | `altera_reserved_tck` | +9.566 ns | |
 
 Hold, recovery, removal and minimum pulse width all pass, and the timing
