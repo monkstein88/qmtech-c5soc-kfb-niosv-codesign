@@ -45,9 +45,11 @@ HPS warm-reset button.
                                    |
                   +----------------+----------------+
                   |                                 |
+                  |                      clk_pll (50 -> 100 MHz)
+                  |                                 |
   +---------------v--------------+  +---------------v--------------+
-  | soc_system (HPS)             |  | niosv_system                 |
-  | reset: HPS h2f_rst_n         |  | reset: FPGA power-on reset   |
+  | soc_system (HPS)  50 MHz     |  | niosv_system      100 MHz    |
+  | reset: HPS h2f_rst_n         |  | reset: FPGA POR and PLL lock |
   |                              |  |                              |
   | lightweight HPS-to-FPGA      |  | Nios V/g                     |
   | bridge:                      |  |   128 KiB instruction TCM    |
@@ -76,12 +78,12 @@ GUI.
 | Address | Size | Component | Notes |
 | ---: | ---: | --- | --- |
 | `0x0000_0000` | 128 KiB | Instruction TCM1 | Reset vector; initialized from the firmware |
-| `0x1000_0000` | 64 KiB | Debug module | JTAG debug and software download |
-| `0x1001_0000` | 64 B | Timer / software interrupt | HAL system timer |
-| `0x1002_0000` | 8 B | JTAG UART | IRQ 0; `stdin`/`stdout`/`stderr` |
-| `0x1003_0000` | 16 B | `pio_led` | 1-bit output, drives the user LED |
-| `0x1003_0010` | 16 B | `pio_dipsw` | 4-bit input, synchronized DIP switches |
-| `0x1003_0020` | 16 B | `pio_button` | 2-bit input, debounced `KEY`, active-low |
+| `0x0002_0000` | 64 KiB | Debug module | JTAG debug and software download |
+| `0x0003_8000` | 64 B | Timer / software interrupt | HAL system timer |
+| `0x0003_8040` | 16 B | `pio_dipsw` | 4-bit input, synchronized DIP switches |
+| `0x0003_8050` | 16 B | `pio_button` | 2-bit input, debounced `KEY`, active-low |
+| `0x0003_8060` | 16 B | `pio_led` | 1-bit output, drives the user LED |
+| `0x0003_8070` | 8 B | JTAG UART | IRQ 0; `stdin`/`stdout`/`stderr` |
 | `0x2000_0000` | 32 KiB | Data TCM1 | Initialized from the firmware |
 
 - The instruction and data managers are AXI4 interfaces.  Platform Designer
@@ -125,12 +127,20 @@ FPGA-to-HPS interrupt lines 0, 1 and 2.
 | `DIPSW[3:0]` | Two-stage synchronizer, then the HPS `dipsw_pio`, the Nios V `pio_dipsw` and the HPS STM events. |
 | `KEY[1:0]` | Two-stage synchronizer and 1 ms debouncer, then the HPS `button_pio`, the Nios V `pio_button` and the HPS STM events.  Active-low. |
 
-- Both systems are clocked by `FPGA_CLK1_50`.
+- `FPGA_CLK1_50` clocks the HPS system, the input synchronizers and the button
+  debouncer directly, and feeds `clk_pll` inside the Nios V system, whose
+  100 MHz output clocks the processor, its peripherals and its reset
+  controller.
 - The HPS system is reset by the HPS `h2f_rst_n` output, as in the reference
   design.
 - The Nios V system and the button debouncer use an FPGA power-on reset that
   is released a few clock cycles after configuration, so HPS cold, warm or
   debug resets do not reset the Nios V.
+- The PLL is reset by that power-on reset alone (`pll_rst_i`), while the rest
+  of the Nios V system is held in reset until the PLL locks
+  (`rst_n_i = fpga_reset_n & locked_o`).  The PLL reset must not be gated with
+  the lock status, and must not come from the reset controller it clocks:
+  either arrangement would hold the PLL in reset with no way to recover.
 - The In-System Sources and Probes instance `RST` can request HPS cold, warm
   and debug resets over JTAG.
 
@@ -206,23 +216,48 @@ niosv-download -r -g software/build/firmware/niosv_app.elf
 
 ## Verification status
 
-Checked:
+The full flow (Platform Designer generation, firmware build, Quartus compile)
+was run on Quartus Prime Standard 25.1 with the device set to
+`5CSEMA6U23I7`.  All stages passed with 0 errors:
 
-- The Nios V system generates from `qsys/create_niosv_system.tcl` without
-  errors; the remaining warnings come from inside the Nios V IP.
-- A HAL BSP and a test application build against the generated system.  The
-  linker places code in the instruction TCM and data, stack and heap in the
-  data TCM, and the build writes the `niosvitcm1.hex`/`niosvdtcm1.hex` TCM
-  initialization files.
+| Stage | Result |
+| --- | --- |
+| Analysis & Synthesis | Successful |
+| Fitter | Successful |
+| Assembler | Successful |
+| Timing Analyzer | Successful |
+| EDA Netlist Writer | Successful |
+
+Resources: 6,934 / 41,910 ALMs (17%), 9,002 registers, 170 / 553 RAM blocks
+(31%), 4 / 112 DSP blocks, 1 / 6 PLLs, 127 / 314 pins.
+
+Timing is met on every clock in all corners.  Worst case setup slack at
+Slow 1100 mV 85 C:
+
+| Clock | Slack | Fmax |
+| --- | ---: | ---: |
+| Nios V `clk_pll` output (100 MHz) | +0.521 ns | 105.5 MHz |
+| HPS DDR3 `afi_clk` | +1.577 ns | |
+| `FPGA_CLK1_50` (50 MHz) | +7.595 ns | 80.6 MHz |
+| `altera_reserved_tck` | +9.566 ns | |
+
+Hold, recovery, removal and minimum pulse width all pass, and the timing
+analyzer reports no unconstrained or illegal clocks.  The unconstrained I/O
+ports it lists are the HPS dedicated pins, whose timing belongs to the HPS
+hard IP.
+
+Also checked:
+
+- The BSP and firmware build against the generated system and supply the
+  `niosvitcm1.hex`/`niosvdtcm1.hex` TCM contents, so the processor starts
+  from the FPGA image.  Their absence shows up as Critical Warning 127003
+  and leaves both memories zero-filled.
 - `constraints/pinning_qmtech_c5soc_kfb_board.tcl` re-applies to the project
   without changing any assignment.
 - Pin numbers, I/O polarities and oscillators against the QMTECH schematic.
 
 Not yet verified:
 
-- The complete flow with these changes: HPS system generation, the final
-  firmware build and the Quartus compile, including timing and resource
-  results.
 - Refreshing the firmware with `quartus_cdb --update_mif`.
 - Programming, the JTAG UART console and `niosv-download` on the board.
 

@@ -13,6 +13,7 @@ quartus/*.qws
 quartus/*.sof
 quartus/*.rbf
 quartus/.qsys_edit/
+quartus/*.txt
 
 # Platform Designer generated output
 qsys/niosv_system/

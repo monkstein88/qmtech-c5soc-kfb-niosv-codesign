@@ -94,6 +94,8 @@ reg   [ 3: 0]  dipsw_sync = 4'b0000;
 wire  [ 1: 0]  fpga_debounced_buttons; // [0] - KEY[0] ; [1] - KEY[1] (active-low)
 wire           fpga_led_internal;
 wire           niosv_led;
+wire           niosv_pll_locked;  // Nios V system PLL lock status
+wire           niosv_reset_n;     // Nios V system reset: FPGA reset AND PLL locked
 wire  [ 2: 0]  hps_reset_req; // [0] - HPS cold reset; [1] - HPS warm reset; [2] - HPS debug reset
 wire           hps_cold_reset;
 wire           hps_warm_reset;
@@ -205,12 +207,19 @@ soc_system HPS_SOPC_INST(
 
 // The FPGA-side Nios V runs from its own reset so that it starts right after
 // FPGA configuration and is not reset by HPS cold/warm/debug resets.
+// The system PLL is reset by the FPGA power-on reset only.  The rest of the
+// Nios V system is additionally held in reset until the PLL has locked, so the
+// processor never runs on an unstable clock. 
+assign niosv_reset_n = fpga_reset_n & niosv_pll_locked;
+
 niosv_system NIOSV_INST(
-  .clk_clk_clk                 (fpga_clk_50),
-  .reset_reset_n_reset         (fpga_reset_n),
-  .pio_led_export_export       (niosv_led),
-  .pio_dipsw_export_export     (dipsw_sync),
-  .pio_button_export_export    (fpga_debounced_buttons)
+  .clk_i_clk                   (fpga_clk_50),
+  .pll_rst_i_reset             (~fpga_reset_n), // active-high PLL reset
+  .rst_n_i_reset               (niosv_reset_n),
+  .locked_o_export             (niosv_pll_locked),
+  .led_o_export                (niosv_led),
+  .dipsw_o_export              (dipsw_sync),
+  .button_o_export             (fpga_debounced_buttons)
 );
 
 // FPGA power-on reset: registers initialize to zero at configuration, so

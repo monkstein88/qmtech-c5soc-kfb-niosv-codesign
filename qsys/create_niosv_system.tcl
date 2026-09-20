@@ -12,18 +12,19 @@
 # both are connected):
 #
 #   0x0000_0000  128 KiB  instruction TCM1 (reset vector)
-#   0x1000_0000           debug module (dm_agent)
-#   0x1001_0000           machine timer / software interrupt (timer_sw_agent)
-#   0x1002_0000           JTAG UART (IRQ 0)
-#   0x1003_0000           LED PIO        (1 bit, output)
-#   0x1003_0010           DIP-switch PIO (4 bits, input)
-#   0x1003_0020           button PIO     (2 bits, input, active-low, debounced)
+#   0x0002_0000   64 KiB  debug module (dm_agent)
+#   0x0003_8000           machine timer / software interrupt (timer_sw_agent)
+#   0x0003_8040           DIP-switch PIO (4 bits, input)
+#   0x0003_8050           button PIO     (2 bits, input, active-low, debounced)
+#   0x0003_8060           LED PIO        (1 bit, output)
+#   0x0003_8070           JTAG UART (IRQ 0)
 #   0x2000_0000   32 KiB  data TCM1
 #
 # The TCMs are accessed by the core directly.  Their AXI4-Lite subordinate
 # ports (instruction_tcs1/data_tcs1) are looped back onto the managers at the
-# same base address, which is the Nios V/g arrangement that lets the debugger
-# download software into the TCMs and gives the BSP its memory regions.
+# same base address as the TCM itself, which is the Nios V/g arrangement that
+# lets the debugger download software into the TCMs and gives the BSP its
+# memory regions.  Keep those base addresses equal to itcm1Base/dtcm1Base.
 #
 # Platform Designer inserts the AXI4 to Avalon-MM translation for the
 # Avalon-MM agents (debug module, timer, JTAG UART, PIOs) automatically.
@@ -32,6 +33,21 @@
 # cache would only consume M10K blocks.  If cached external memory is added
 # later, re-enable the caches and place all peripherals inside a Nios V
 # peripheral region (peripheralRegionABase/Size), which must stay uncached.
+#
+# Clocking and reset:
+#
+#   clk_i ---> clk (bridge) ---> clk_pll.refclk ---> outclk0 ---> cpu, jtag_uart,
+#                                                                pio_*, rst.clk
+#   pll_rst_i --------------> clk_pll.reset    (board reset only)
+#   rst_n_i ----------------> rst.reset_in0    (board reset AND clk_pll locked)
+#   rst.reset_out ----------> cpu, jtag_uart, pio_* resets
+#
+# The reset controller runs on the PLL output so that reset de-assertion is
+# synchronized to the domain it resets.  The PLL reset therefore must NOT come
+# from rst.reset_out: that would stop the clock the reset controller needs to
+# release its own reset.  For the same reason the exported locked conduit is
+# combined with the board reset in the board top level and fed back in through
+# rst_n_i, never into pll_rst_i.
 
 package require -exact qsys 25.1
 
@@ -44,6 +60,10 @@ set dtcm_init_file ../software/build/firmware/niosvdtcm1.hex
 set itcm_base 0x00000000
 set dtcm_base 0x20000000
 
+# Board clock and Nios V system clock, in MHz.
+set refclk_mhz 50.0
+set sysclk_mhz 100.0
+
 create_system niosv_system
 set_project_property DEVICE_FAMILY "Cyclone V"
 set_project_property DEVICE 5CSEMA6U23I7
@@ -52,7 +72,15 @@ set_project_property DEVICE 5CSEMA6U23I7
 # Instances
 # ---------------------------------------------------------------------------
 add_instance clk altera_clock_bridge 25.1
-set_instance_parameter_value clk {EXPLICIT_CLOCK_RATE} {50000000}
+set_instance_parameter_value clk {EXPLICIT_CLOCK_RATE} [expr {int($refclk_mhz * 1000000)}]
+
+add_instance clk_pll altera_pll 25.1
+set_instance_parameter_value clk_pll {gui_pll_mode} {Integer-N PLL}
+set_instance_parameter_value clk_pll {gui_reference_clock_frequency} $refclk_mhz
+set_instance_parameter_value clk_pll {gui_operation_mode} {direct}
+set_instance_parameter_value clk_pll {gui_number_of_clocks} {1}
+set_instance_parameter_value clk_pll {gui_output_clock_frequency0} $sysclk_mhz
+set_instance_parameter_value clk_pll {gui_use_locked} {true}
 
 add_instance rst altera_reset_controller 25.1
 set_instance_parameter_value rst {NUM_RESET_INPUTS} {1}
@@ -61,6 +89,7 @@ set_instance_parameter_value rst {SYNC_DEPTH} {2}
 add_instance cpu intel_niosv_g 4.0.0
 set_instance_parameter_value cpu {instCacheSize} {0}
 set_instance_parameter_value cpu {dataCacheSize} {0}
+set_instance_parameter_value cpu {enableFPU} {false}
 set_instance_parameter_value cpu {itcm1Size} {131072}
 set_instance_parameter_value cpu {itcm1Base} $itcm_base
 set_instance_parameter_value cpu {itcm1InitFile} $itcm_init_file
@@ -90,8 +119,11 @@ set_instance_parameter_value pio_button {width} {2}
 # ---------------------------------------------------------------------------
 # Clock and reset
 # ---------------------------------------------------------------------------
+add_connection clk.out_clk clk_pll.refclk
+
+# Everything, including the reset controller, runs on the PLL output.
 foreach sink {rst cpu jtag_uart pio_led pio_dipsw pio_button} {
-    add_connection clk.out_clk $sink.clk
+    add_connection clk_pll.outclk0 $sink.clk
 }
 foreach sink {cpu jtag_uart pio_led pio_dipsw pio_button} {
     add_connection rst.reset_out $sink.reset
@@ -109,13 +141,13 @@ connect_mm cpu.instruction_manager cpu.instruction_tcs1        $itcm_base
 connect_mm cpu.data_manager        cpu.instruction_tcs1        $itcm_base
 connect_mm cpu.data_manager        cpu.data_tcs1               $dtcm_base
 
-connect_mm cpu.instruction_manager cpu.dm_agent                0x10000000
-connect_mm cpu.data_manager        cpu.dm_agent                0x10000000
-connect_mm cpu.data_manager        cpu.timer_sw_agent          0x10010000
-connect_mm cpu.data_manager        jtag_uart.avalon_jtag_slave 0x10020000
-connect_mm cpu.data_manager        pio_led.s1                  0x10030000
-connect_mm cpu.data_manager        pio_dipsw.s1                0x10030010
-connect_mm cpu.data_manager        pio_button.s1               0x10030020
+connect_mm cpu.instruction_manager cpu.dm_agent                0x00020000
+connect_mm cpu.data_manager        cpu.dm_agent                0x00020000
+connect_mm cpu.data_manager        cpu.timer_sw_agent          0x00038000
+connect_mm cpu.data_manager        pio_dipsw.s1                0x00038040
+connect_mm cpu.data_manager        pio_button.s1               0x00038050
+connect_mm cpu.data_manager        pio_led.s1                  0x00038060
+connect_mm cpu.data_manager        jtag_uart.avalon_jtag_slave 0x00038070
 
 # ---------------------------------------------------------------------------
 # Interrupts
@@ -126,15 +158,19 @@ set_connection_parameter_value cpu.platform_irq_rx/jtag_uart.irq irqNumber {0}
 # ---------------------------------------------------------------------------
 # Exported interfaces (names are relied on by the board top level)
 # ---------------------------------------------------------------------------
-add_interface clk_clk clock end
-set_interface_property clk_clk EXPORT_OF clk.in_clk
-add_interface reset_reset_n reset end
-set_interface_property reset_reset_n EXPORT_OF rst.reset_in0
-add_interface pio_led_export conduit end
-set_interface_property pio_led_export EXPORT_OF pio_led.external_connection
-add_interface pio_dipsw_export conduit end
-set_interface_property pio_dipsw_export EXPORT_OF pio_dipsw.external_connection
-add_interface pio_button_export conduit end
-set_interface_property pio_button_export EXPORT_OF pio_button.external_connection
+add_interface clk_i clock end
+set_interface_property clk_i EXPORT_OF clk.in_clk
+add_interface pll_rst_i reset end
+set_interface_property pll_rst_i EXPORT_OF clk_pll.reset
+add_interface locked_o conduit end
+set_interface_property locked_o EXPORT_OF clk_pll.locked
+add_interface rst_n_i reset end
+set_interface_property rst_n_i EXPORT_OF rst.reset_in0
+add_interface led_o conduit end
+set_interface_property led_o EXPORT_OF pio_led.external_connection
+add_interface dipsw_o conduit end
+set_interface_property dipsw_o EXPORT_OF pio_dipsw.external_connection
+add_interface button_o conduit end
+set_interface_property button_o EXPORT_OF pio_button.external_connection
 
 save_system niosv_system.qsys
