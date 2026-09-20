@@ -29,7 +29,7 @@
    {
       datum _sortIndex
       {
-         value = "3";
+         value = "4";
          type = "int";
       }
    }
@@ -37,7 +37,7 @@
    {
       datum _sortIndex
       {
-         value = "4";
+         value = "5";
          type = "int";
       }
    }
@@ -45,7 +45,7 @@
    {
       datum _sortIndex
       {
-         value = "7";
+         value = "8";
          type = "int";
       }
    }
@@ -53,7 +53,7 @@
    {
       datum _sortIndex
       {
-         value = "6";
+         value = "7";
          type = "int";
       }
    }
@@ -61,11 +61,19 @@
    {
       datum _sortIndex
       {
-         value = "5";
+         value = "6";
          type = "int";
       }
    }
    element rst
+   {
+      datum _sortIndex
+      {
+         value = "3";
+         type = "int";
+      }
+   }
+   element rst_in
    {
       datum _sortIndex
       {
@@ -112,7 +120,7 @@
    dir="end" />
  <interface name="locked_o" internal="clk_pll.locked" type="conduit" dir="end" />
  <interface name="pll_rst_i" internal="clk_pll.reset" type="reset" dir="end" />
- <interface name="rst_n_i" internal="rst.reset_in0" type="reset" dir="end" />
+ <interface name="rst_n_i" internal="rst_in.in_reset" type="reset" dir="end" />
  <module name="clk" kind="altera_clock_bridge" version="25.1" enabled="1">
   <parameter name="DERIVED_CLOCK_RATE" value="0" />
   <parameter name="EXPLICIT_CLOCK_RATE" value="50000000" />
@@ -473,6 +481,13 @@
   <parameter name="USE_RESET_REQUEST_IN9" value="0" />
   <parameter name="USE_RESET_REQUEST_INPUT" value="0" />
  </module>
+ <module name="rst_in" kind="altera_reset_bridge" version="25.1" enabled="1">
+  <parameter name="ACTIVE_LOW_RESET" value="1" />
+  <parameter name="AUTO_CLK_CLOCK_RATE" value="-1" />
+  <parameter name="NUM_RESET_OUTPUTS" value="1" />
+  <parameter name="SYNCHRONOUS_EDGES" value="none" />
+  <parameter name="USE_RESET_REQUEST" value="0" />
+ </module>
  <connection
    kind="avalon"
    version="25.1"
@@ -589,6 +604,11 @@
    end="jtag_uart.irq">
   <parameter name="irqNumber" value="0" />
  </connection>
+ <connection
+   kind="reset"
+   version="25.1"
+   start="rst_in.out_reset"
+   end="rst.reset_in0" />
  <connection kind="reset" version="25.1" start="rst.reset_out" end="cpu.reset" />
  <connection
    kind="reset"

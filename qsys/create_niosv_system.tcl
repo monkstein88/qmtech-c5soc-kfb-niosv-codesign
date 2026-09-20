@@ -82,6 +82,13 @@ set_instance_parameter_value clk_pll {gui_number_of_clocks} {1}
 set_instance_parameter_value clk_pll {gui_output_clock_frequency0} $sysclk_mhz
 set_instance_parameter_value clk_pll {gui_use_locked} {true}
 
+# The reset controller input is active high.  The bridge in front of it makes
+# the exported rst_n_i genuinely active low, matching its name, so the board
+# top level can drive it with an active-low reset.
+add_instance rst_in altera_reset_bridge 25.1
+set_instance_parameter_value rst_in {ACTIVE_LOW_RESET} {1}
+set_instance_parameter_value rst_in {SYNCHRONOUS_EDGES} {none}
+
 add_instance rst altera_reset_controller 25.1
 set_instance_parameter_value rst {NUM_RESET_INPUTS} {1}
 set_instance_parameter_value rst {SYNC_DEPTH} {2}
@@ -125,6 +132,10 @@ add_connection clk.out_clk clk_pll.refclk
 foreach sink {rst cpu jtag_uart pio_led pio_dipsw pio_button} {
     add_connection clk_pll.outclk0 $sink.clk
 }
+
+# rst_in is asynchronous (SYNCHRONOUS_EDGES none) and therefore has no clock
+# interface; the reset controller behind it does the synchronization.
+add_connection rst_in.out_reset rst.reset_in0
 foreach sink {cpu jtag_uart pio_led pio_dipsw pio_button} {
     add_connection rst.reset_out $sink.reset
 }
@@ -165,7 +176,7 @@ set_interface_property pll_rst_i EXPORT_OF clk_pll.reset
 add_interface locked_o conduit end
 set_interface_property locked_o EXPORT_OF clk_pll.locked
 add_interface rst_n_i reset end
-set_interface_property rst_n_i EXPORT_OF rst.reset_in0
+set_interface_property rst_n_i EXPORT_OF rst_in.in_reset
 add_interface led_o conduit end
 set_interface_property led_o EXPORT_OF pio_led.external_connection
 add_interface dipsw_o conduit end

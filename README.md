@@ -256,10 +256,20 @@ Also checked:
   without changing any assignment.
 - Pin numbers, I/O polarities and oscillators against the QMTECH schematic.
 
+On the board:
+
+- The `.sof` programs over a USB-Blaster, and the Nios V runs the firmware
+  built into the image: the user LED blinks at the rate `software/app/main.c`
+  sets, without any download step.
+- The Nios V debug module answers on JTAG (`dmstatus` reads back non-zero).
+
 Not yet verified:
 
 - Refreshing the firmware with `quartus_cdb --update_mif`.
-- Programming, the JTAG UART console and `niosv-download` on the board.
+- The JTAG UART console and `niosv-download`.  Both need a debug probe that
+  Altera's Nios V tools support - USB-Blaster II, Opella-XD, Opella-LD, HS2 or
+  Vitra-XS.  A USB-Blaster I (or clone) configures the FPGA fine, but the
+  Ashling GDB server rejects it and `juart-terminal` drops with I/O errors.
 
 ## Quartus 25.1 notes
 

@@ -215,7 +215,7 @@ assign niosv_reset_n = fpga_reset_n & niosv_pll_locked;
 niosv_system NIOSV_INST(
   .clk_i_clk                   (fpga_clk_50),
   .pll_rst_i_reset             (~fpga_reset_n), // active-high PLL reset
-  .rst_n_i_reset               (niosv_reset_n),
+  .rst_n_i_reset_n             (niosv_reset_n), // active-low system reset
   .locked_o_export             (niosv_pll_locked),
   .led_o_export                (niosv_led),
   .dipsw_o_export              (dipsw_sync),
