@@ -1,10 +1,11 @@
 # Platform Designer generator for the FPGA-side Nios V control system.
 #
-# This script is the source of truth for qsys/niosv_system.qsys.  The .qsys
-# file is regenerated from it by scripts/generate_platform_designs.sh, so make
-# system changes here rather than in the Platform Designer GUI.
+# This script is a hand-maintained MIRROR of qsys/niosv_system.qsys, which is
+# the source of truth and is edited in Platform Designer.  Keep this script in
+# step with the .qsys after system changes; it is not run by the normal build.
 #
-# Run from qsys/ with:
+# To intentionally rebuild the .qsys FROM this script (bootstrap or reset),
+# run from qsys/ with (this overwrites niosv_system.qsys):
 #   qsys-script --script=create_niosv_system.tcl
 #   qsys-generate niosv_system.qsys --synthesis=VERILOG --output-directory=niosv_system
 #
@@ -96,7 +97,7 @@ set_instance_parameter_value rst_in {SYNCHRONOUS_EDGES} {none}
 
 add_instance rst altera_reset_controller 25.1
 set_instance_parameter_value rst {NUM_RESET_INPUTS} {1}
-set_instance_parameter_value rst {SYNC_DEPTH} {2}
+set_instance_parameter_value rst {SYNC_DEPTH} {4}
 
 add_instance cpu intel_niosv_g 4.0.0
 set_instance_parameter_value cpu {instCacheSize} {0}
@@ -110,6 +111,8 @@ set_instance_parameter_value cpu {dtcm1Base} $dtcm_base
 set_instance_parameter_value cpu {dtcm1InitFile} $dtcm_init_file
 set_instance_parameter_value cpu {resetSlave} {Absolute}
 set_instance_parameter_value cpu {resetOffset} $itcm_base
+set_instance_parameter_value cpu {basicInterruptMode} {1}
+set_instance_parameter_value cpu {basicShadowRegisterFiles} {1}
 
 add_instance jtag_uart altera_avalon_jtag_uart 25.1
 set_instance_parameter_value jtag_uart {readBufferDepth} {1024}

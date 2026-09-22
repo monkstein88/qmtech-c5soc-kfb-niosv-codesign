@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 # Generate the Platform Designer systems used by the Quartus project.
 #
-# Usage: scripts/generate_platform_designs.sh [--skip-niosv-script]
+# Usage: scripts/generate_platform_designs.sh [--rebuild-niosv-from-tcl]
 #
-# qsys/niosv_system.qsys is re-created from qsys/create_niosv_system.tcl first,
-# so the Tcl script stays the source of truth for the Nios V system.  Pass
-# --skip-niosv-script to generate the existing niosv_system.qsys unchanged, e.g.
-# while trying out an edit made in the Platform Designer GUI (port such edits
-# back into the Tcl script, or they are lost on the next regular run).
+# qsys/niosv_system.qsys is the source of truth and is edited in Platform
+# Designer; this script only generates its synthesis output as-is.
+# create_niosv_system.tcl is a hand-maintained mirror of that .qsys.  Pass
+# --rebuild-niosv-from-tcl to instead re-create niosv_system.qsys FROM the Tcl
+# (this overwrites the .qsys; use only to bootstrap or intentionally reset it).
 set -euo pipefail
 
 usage() {
     sed -n '2,10s/^# \{0,1\}//p' "${BASH_SOURCE[0]}"
 }
 
-run_niosv_script=1
+run_niosv_script=0
 for arg in "$@"; do
     case "$arg" in
-        --skip-niosv-script) run_niosv_script=0 ;;
+        --rebuild-niosv-from-tcl) run_niosv_script=1 ;;
         -h|--help) usage; exit 0 ;;
         *) echo "error: unknown argument: $arg" >&2; usage >&2; exit 1 ;;
     esac
@@ -33,7 +33,7 @@ require_tools qsys-script qsys-generate
 cd "$qsys_dir"
 
 if (( run_niosv_script )); then
-    echo "Creating niosv_system.qsys from create_niosv_system.tcl"
+    echo "WARNING: rebuilding niosv_system.qsys FROM create_niosv_system.tcl (overwrites the source-of-truth .qsys)"
     qsys-script --script=create_niosv_system.tcl
 fi
 

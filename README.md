@@ -70,10 +70,14 @@ communication path between them yet.
 
 ### Nios V/g system
 
-`qsys/create_niosv_system.tcl` is the source of truth for the Nios V system;
-`scripts/generate_platform_designs.sh` re-creates `qsys/niosv_system.qsys`
-from it.  Make system changes in the Tcl script, not in the Platform Designer
-GUI.
+`qsys/niosv_system.qsys` is the source of truth for the Nios V system: make
+system changes in Platform Designer and commit the `.qsys`.
+`scripts/generate_platform_designs.sh` generates its synthesis output as-is
+and does not overwrite it.  `qsys/create_niosv_system.tcl` is a hand-maintained
+mirror of the `.qsys`, kept for readable review and diffs; update it to match
+after a system change (it is not run by the normal build).  To intentionally
+rebuild the `.qsys` from the Tcl - to bootstrap or reset it - run the script
+with `--rebuild-niosv-from-tcl`.
 
 | Address | Size | Component | Notes |
 | ---: | ---: | --- | --- |
