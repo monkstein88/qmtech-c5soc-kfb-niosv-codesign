@@ -349,7 +349,7 @@
   <parameter name="deviceFamily" value="Cyclone V" />
   <parameter name="disableFsqrtFdiv" value="false" />
   <parameter name="dtcm1Base" value="536870912" />
-  <parameter name="dtcm1InitFile">../software/build/firmware/niosvdtcm1.hex</parameter>
+  <parameter name="dtcm1InitFile">../software/hal_app/build/Default/niosvdtcm1.hex</parameter>
   <parameter name="dtcm1Size" value="32768" />
   <parameter name="dtcm2Base" value="0" />
   <parameter name="dtcm2InitFile" value="" />
@@ -374,7 +374,7 @@
   <parameter name="instCacheSize" value="0" />
   <parameter name="instSlaveMapParam"><![CDATA[<address-map><slave name='cpu.instruction_tcs1' start='0x0' end='0x20000' type='intel_niosv_g.instruction_tcs1' /><slave name='cpu.dm_agent' start='0x20000' end='0x30000' type='intel_niosv_g.dm_agent' /></address-map>]]></parameter>
   <parameter name="itcm1Base" value="0" />
-  <parameter name="itcm1InitFile">../software/build/firmware/niosvitcm1.hex</parameter>
+  <parameter name="itcm1InitFile">../software/hal_app/build/Default/niosvitcm1.hex</parameter>
   <parameter name="itcm1Size" value="131072" />
   <parameter name="itcm2Base" value="0" />
   <parameter name="itcm2InitFile" value="" />

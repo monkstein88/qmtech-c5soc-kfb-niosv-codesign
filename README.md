@@ -71,13 +71,9 @@ communication path between them yet.
 ### Nios V/g system
 
 `qsys/niosv_system.qsys` is the source of truth for the Nios V system: make
-system changes in Platform Designer and commit the `.qsys`.
-`scripts/generate_platform_designs.sh` generates its synthesis output as-is
-and does not overwrite it.  `qsys/create_niosv_system.tcl` is a hand-maintained
-mirror of the `.qsys`, kept for readable review and diffs; update it to match
-after a system change (it is not run by the normal build).  To intentionally
-rebuild the `.qsys` from the Tcl - to bootstrap or reset it - run the script
-with `--rebuild-niosv-from-tcl`.
+system changes in Platform Designer and commit the `.qsys`.  Its synthesis
+output, and the `.sopcinfo` file that the Nios V BSP is built from, are
+generated from it (see [Build](#build)).
 
 | Address | Size | Component | Notes |
 | ---: | ---: | --- | --- |
@@ -102,6 +98,12 @@ with `--rebuild-niosv-from-tcl`.
   coupled.  If cached external memory is added later, re-enable the caches and
   place all peripherals in a Nios V peripheral region (`peripheralRegionABase`
   and `peripheralRegionASize`), which must remain uncached.
+- Interrupts use the CLINT in vectored mode (`mtvec.MODE` = 01), with one
+  shadow register file for interrupt handlers (`basicInterruptMode` and
+  `basicShadowRegisterFiles` in the `.qsys`; the BSP's `system.h` reports
+  `ALT_CPU_INT_MODE 1` and `ALT_CPU_NUM_SRF_BANKS 2`).  The Altera HAL still
+  saves and restores every register on interrupt entry and exit, so the shadow
+  register file does not shorten interrupt latency under the HAL.
 
 ### HPS system
 
@@ -150,38 +152,110 @@ FPGA-to-HPS interrupt lines 0, 1 and 2.
 
 ## Prerequisites
 
-Quartus Prime Standard Edition 25.1 for Linux with Cyclone V device support
-and the Nios V tools (Nios V command shell, RiscFree toolchain and CMake).  The
-scripts locate the installation from `QUARTUS_ROOTDIR` or from the `quartus_sh`
-or `qsys-script` found on `PATH`, and use every tool from that one
-installation.
+Quartus Prime Standard Edition 25.1 for Linux with Cyclone V device support,
+and the Nios V tools installed with it: the Nios V Command Shell
+(`niosv-shell`), the RiscFree IDE and toolchain, and CMake.  The Platform
+Designer and Quartus command-line tools (`qsys-generate`, `quartus_sh`) must
+be on `PATH`.
 
 ## Build
+
+The design is built by hand in three steps: generate the Platform Designer
+systems, build the Nios V software, then compile the Quartus project.  The
+firmware has to be built before the Quartus compile, because Analysis &
+Synthesis reads it into the TCMs.
+
+### 1. Generate the Platform Designer systems
+
+From the project root, generate the synthesis output of both systems (or open
+each `.qsys` in Platform Designer and use **Generate HDL**):
+
+```sh
+cd qsys
+qsys-generate soc_system.qsys --synthesis=VERILOG --output-directory=soc_system
+qsys-generate niosv_system.qsys --synthesis=VERILOG --output-directory=niosv_system
+```
+
+This creates the `.qip` files that the QSF references (see
+[QSYS versus QIP](#qsys-versus-qip)) and `qsys/niosv_system.sopcinfo`, which
+the Nios V BSP is built from.
+
+### 2. Build the Nios V software
+
+The software is two RiscFree/CMake projects under `software/`:
+
+| Directory | Contents |
+| --- | --- |
+| `software/hal_bsp/` | HAL board support package generated from `niosv_system.sopcinfo`: `settings.bsp`, the exported `settings.tcl`, `system.h`, `linker.x`, HAL and driver sources |
+| `software/hal_app/` | Application: `src/main.c`, `inc/main.h` and the generated `CMakeLists.txt`; builds `blinky.elf` |
+
+Run the commands below from the Nios V Command Shell, in `software/`:
+
+```sh
+/opt/altera/25.1std/niosv/bin/niosv-shell
+cd software
+```
+
+Both projects are already in the repository.  To recreate them from scratch:
+
+```sh
+niosv-bsp --create --type=hal --sopcinfo=../qsys/niosv_system.sopcinfo --bsp-dir=hal_bsp hal_bsp/settings.bsp
+niosv-bsp --query --export-as-tcl=hal_bsp/settings.tcl hal_bsp/settings.bsp
+niosv-app --app-dir=hal_app --bsp-dir=hal_bsp --srcs=hal_app/src --srcs=hal_app/inc --incs=hal_app/inc --elf-name=blinky.elf
+```
+
+`niosv-app` writes `hal_app/CMakeLists.txt`.  After a change to the Nios V
+system, regenerate `niosv_system.sopcinfo` (step 1), then update the BSP; this
+keeps its existing settings:
+
+```sh
+niosv-bsp --update hal_bsp/settings.bsp
+```
+
+Build the firmware either in the RiscFree IDE (start it with `RiscFree` from
+the same shell and build the `hal_bsp` and `hal_app` projects), or from the
+command line:
+
+```sh
+cmake -G "Unix Makefiles" -S hal_app -B hal_app/build/Default
+make -C hal_app/build/Default
+```
+
+Both put the results in `software/hal_app/build/Default/`:
+
+| File | Purpose |
+| --- | --- |
+| `blinky.elf` | Firmware, for `niosv-download` and the debugger |
+| `niosvitcm1.hex` | Instruction TCM1 contents |
+| `niosvdtcm1.hex` | Data TCM1 contents |
+
+`niosv_system.qsys` names those two `.hex` files as the TCM initialization
+files, which is how the firmware gets into the FPGA image.  The build type
+defaults to Debug (`-g`, no optimization), as in RiscFree; add
+`-DCMAKE_BUILD_TYPE=Release` to the `cmake` line for `-O2`.
+
+### 3. Compile the Quartus project
 
 From the project root:
 
 ```sh
-./scripts/generate_platform_designs.sh   # Platform Designer systems
-./scripts/build_firmware.sh              # BSP, firmware and TCM .hex files
 cd quartus
 quartus_sh --flow compile qmtech_c5soc_kfb_niosv_codesign
 ```
 
 The programming image is `quartus/output_files/qmtech_c5soc_kfb_niosv_codesign.sof`.
-The generated Platform Designer output, the firmware build under
-`software/build/` and the Quartus build products are not source-controlled.
-
-The firmware must be built before Analysis & Synthesis, because the TCM
-contents are read from `software/build/firmware/niosvitcm1.hex` and
-`niosvdtcm1.hex`.
+The generated Platform Designer output, the software build folders
+(`software/hal_app/build/` and `software/hal_bsp/build/`, including the `.elf`
+and `.hex` files) and the Quartus build products are not source-controlled.
 
 ### Update the firmware in an existing FPGA image
 
-After changing only the firmware, rebuild it and refresh the memory contents
-without a full recompile:
+After changing only the firmware, rebuild it (from the Nios V Command Shell,
+or in RiscFree) and refresh the memory contents without a full recompile.
+From the project root:
 
 ```sh
-./scripts/build_firmware.sh
+make -C software/hal_app/build/Default
 cd quartus
 quartus_cdb qmtech_c5soc_kfb_niosv_codesign --update_mif
 quartus_asm qmtech_c5soc_kfb_niosv_codesign
@@ -199,7 +273,7 @@ quartus_pgm -c 1 -m jtag -o "p;quartus/output_files/qmtech_c5soc_kfb_niosv_codes
 Note that `quartus_pgm` counts devices from 1 (the FPGA is `@2`), while
 `niosv-download` counts from 0 (`--device=1 --instance=0` for the same FPGA).
 
-The bring-up firmware (`software/app/main.c`) then runs immediately:
+The bring-up firmware (`software/hal_app/src/main.c`) then runs immediately:
 
 - the user LED blinks at 1 Hz with all DIP switches off, and faster as the
   switch value increases (half period = 500 ms / (DIPSW + 1));
@@ -223,14 +297,17 @@ To download and run a new firmware build over JTAG without reprogramming the
 FPGA:
 
 ```sh
-niosv-download -c 1 -d 1 -i 0 -r -g software/build/firmware/niosv_app.elf
+niosv-download -c 1 -d 1 -i 0 -r -g software/hal_app/build/Default/blinky.elf
 ```
 
 ## Verification status
 
 The full flow (Platform Designer generation, firmware build, Quartus compile)
 was run on Quartus Prime Standard 25.1 with the device set to
-`5CSEMA6U23I7`.  All stages passed with 0 errors:
+`5CSEMA6U23I7`.  The results below were recorded with the earlier scripted
+flow, before the switch to vectored interrupts with a shadow register file and
+to the manual build described above; re-run the compile to refresh them.  All
+stages passed with 0 errors:
 
 | Stage | Result |
 | --- | --- |
@@ -271,7 +348,7 @@ Also checked:
 On the board:
 
 - The `.sof` programs over a USB-Blaster, and the Nios V runs the firmware
-  built into the image: the user LED blinks at the rate `software/app/main.c`
+  built into the image: the user LED blinks at the rate the bring-up firmware
   sets, without any download step.
 - The Nios V debug module answers on JTAG (`dmstatus` reads back non-zero).
 
@@ -315,10 +392,10 @@ generated or encrypted Nios RTL.
 
 The Nios V system uses `altera_clock_bridge` rather than
 `altera_avalon_clock_source`: the board clock is exported into the Platform
-Designer system and the bridge output drives the internal Nios V,
-reset-controller, UART and PIO clock sinks.  An exported clock-source output
-driven again from `FPGA_CLK1_50` in the board wrapper causes a multiple-driver
-error.
+Designer system, and the bridge output feeds the reference clock of
+`clk_pll`, whose 100 MHz output clocks the processor, the reset controller,
+the JTAG UART and the PIOs.  An exported clock-source output driven again from
+`FPGA_CLK1_50` in the board wrapper causes a multiple-driver error.
 
 ### Constraints
 
