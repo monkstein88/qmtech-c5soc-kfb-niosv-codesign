@@ -329,7 +329,7 @@
   <parameter name="gui_switchover_mode">Automatic Switchover</parameter>
   <parameter name="gui_use_locked" value="true" />
  </module>
- <module name="cpu" kind="intel_niosv_g" version="4.0.0" enabled="1">
+ <module name="cpu" kind="intel_niosv_g" version="4.0.1" enabled="1">
   <parameter name="AUTO_CLK_CLOCK_DOMAIN" value="4" />
   <parameter name="AUTO_CLK_RESET_DOMAIN" value="4" />
   <parameter name="AUTO_DEVICE" value="5CSEMA6U23I7" />

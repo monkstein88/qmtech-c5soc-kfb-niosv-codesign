@@ -158,6 +158,14 @@ and the Nios V tools installed with it: the Nios V Command Shell
 Designer and Quartus command-line tools (`qsys-generate`, `quartus_sh`) must
 be on `PATH`.
 
+The Quartus 25.1 installation also needs Altera's patch for Nios V/g data
+corruption when using DTCM, described in the Knowledge Base article
+[Why does Nios V/g experience data corruption when using DTCM?](https://community.altera.com/kb/knowledge-base/why-does-nios%C2%AE-vg-experience-data-corruption-when-using-dtcm/356605).
+With the patch installed, Quartus reports its version as
+`25.1std.0 SP0.01std`, and Platform Designer provides version 4.0.1 of the
+Nios V/g IP, which `niosv_system.qsys` uses.  An unpatched 25.1 installation
+only has Nios V/g 4.0.0.
+
 ## Build
 
 The design is built by hand in three steps: generate the Platform Designer
