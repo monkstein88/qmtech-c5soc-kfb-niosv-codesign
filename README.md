@@ -10,19 +10,33 @@ media or its DDR3 memory.
 
 ## Board
 
-The details below were checked against the QMTECH schematic
-(`QMTECH_Cyclone_V_SoC_KFB_Dual_SDRAM_Schematic_20240607_V01.pdf`) and the
-QMTECH "How to Set Up" guide.
+The details below were checked against the QMTECH
+[schematic](doc/schematic/QMTECH_Cyclone_V_SoC_KFB_Dual_SDRAM_Schematic_20240607_V01.pdf),
+which is in `doc/` together with QMTECH's other board documents, copied
+unmodified from QMTECH's
+[board repository](https://github.com/ChinaQMTECH/QMTECH_Cyclone_V_SoC_KFB_With_Dual_SDRAM):
+
+| Document | Files |
+| --- | --- |
+| Schematic | [Dual SDRAM schematic](doc/schematic/QMTECH_Cyclone_V_SoC_KFB_Dual_SDRAM_Schematic_20240607_V01.pdf) |
+| Board dimensions | [Top](doc/schematic/QMTECH_Cyclone_V_SoC_KFB_Dimension_Top_20240607_V01.pdf), [bottom](doc/schematic/QMTECH_Cyclone_V_SoC_KFB_Dimension_Bottom_20240607_V01.pdf) |
+| Silkscreen | [Top and bottom](doc/schematic/QMTECH_Cyclone_V_SoC_KFB_Dual_SDRAM_SilkScreen_TOP_BOTTOM_20240607_V01.pdf) |
+| Photos | [Top](doc/pictures/qmtech-c5soc-kfb-dual-sdram-board-TOP_5CSEMA6U23.jpg), [bottom](doc/pictures/qmtech-c5soc-kfb-dual-sdram-board-BOTTOM.jpg) |
 
 - **FPGA:** Cyclone V SoC 5CSEMA6U23 (the schematic footprint also accepts
-  5CSEBA6U23 and 5CSXFC6C6U23).  The project targets `5CSEMA6U23I7`; QMTECH's
-  reference photo shows a `5CSEMA6U23A7` part, so check the grade printed on
-  your board.
+  5CSEBA6U23 and 5CSXFC6C6U23).  The board carries a `5CSEMA6U23A7` part (see
+  the [top photo](doc/pictures/qmtech-c5soc-kfb-dual-sdram-board-TOP_5CSEMA6U23.jpg)),
+  but the Quartus project targets `5CSEMA6U23I7`, because that lets the ARM
+  HPS run at a higher maximum MPU clock: 800 MHz for -I7 instead of 700 MHz for
+  -A7 (Cyclone V Device Datasheet, HPS Clock Performance).
+  `qsys/soc_system.qsys` uses the default MPU clock, 800 MHz.
 - **HPS memory:** 2 x Micron MT41K256M16TW-107 DDR3L (1 GiB).
 - **Configuration:** no configuration flash; the FPGA is configured over JTAG
-  or by the HPS.  MSEL switch U18: ON drives the bit to 0.  QMTECH lists the
-  board default as MSEL[4:0] = 10101; see
-  `constraints/pinning_qmtech_c5soc_kfb_board.tcl` for this project's setting.
+  or by the HPS.  MSEL switch U18: ON drives the bit to 0.  This project sets
+  **all five MSEL switches ON**, MSEL[4:0] = 00000: FPP x16 with compression
+  and design security disabled, so the HPS loads an uncompressed `.rbf`.  The
+  Quartus settings in `constraints/pinning_qmtech_c5soc_kfb_board.tcl` match
+  (FPP x16, on-chip bitstream decompression off).
   The HPS boots from the SD card (BOOTSEL = 101).
 
 | HDL port | FPGA pin | Board net / part | Notes |
@@ -439,7 +453,12 @@ integration model used here:
    - Official processor architecture, memory, debug, and software guidance.
 4. [Nios V Processor IP Core User Guide](https://docs.altera.com/r/docs/683632/25.1/nios-v-processor-ip-core-user-guide)
    - Official Platform Designer IP configuration and interface guidance.
-5. [Nios V/g MAX 10 iPerf example](https://raw.githubusercontent.com/altera-fpga/max10-ed-nios/rel/25.1std/max10-10m50-evaluation-dev-kit/niosv_g/max10_iperf/docs/niosv_g_processor_iperf_design_on_max10_FPGA.md)
+5. [AN 985: Nios V Processor Tutorial](https://docs.altera.com/r/docs/784468/current/an-985-nios-v-processor-tutorial)
+   - Altera application note, document 784468.
+   - Official getting-started tutorial: builds a Nios V processor system in
+     Platform Designer and runs a Hello World application on it, including
+     simulation, software download and debugging.
+6. [Nios V/g MAX 10 iPerf example](https://raw.githubusercontent.com/altera-fpga/max10-ed-nios/rel/25.1std/max10-10m50-evaluation-dev-kit/niosv_g/max10_iperf/docs/niosv_g_processor_iperf_design_on_max10_FPGA.md)
    - Official Altera example using Nios V/g with Quartus Prime Standard 25.1.
-6. [Nios V/g MAX 10 Simple Socket Server example](https://raw.githubusercontent.com/altera-fpga/max10-ed-nios/rel/25.1std/max10-10m50-evaluation-dev-kit/niosv_g/max10_sss/docs/niosv_g_processor_sss_design_on_max10_FPGA.md)
+7. [Nios V/g MAX 10 Simple Socket Server example](https://raw.githubusercontent.com/altera-fpga/max10-ed-nios/rel/25.1std/max10-10m50-evaluation-dev-kit/niosv_g/max10_sss/docs/niosv_g_processor_sss_design_on_max10_FPGA.md)
    - Additional official Quartus 25.1 Standard Nios V/g reference design.

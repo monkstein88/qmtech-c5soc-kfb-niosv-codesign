@@ -34,7 +34,6 @@ set_global_assignment -name DEVICE_FILTER_PIN_COUNT 672
 set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 7
 set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
 # Instruct the Assembler to produce a uncompressed bitstream and ensures the target FPGA is configured to not decompress the data on-the-fly during configuration. Note: set MSEL DIP SW [0:4] = '00000' (All set to 'ON')
-# (MSEL switch U18: ON drives the MSEL bit to 0.  The QMTECH "How to Set Up" guide lists the board default as MSEL[4:0] = 10101.)
 set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
 # Set configuration scheme to Passive Parallel x16 (FPP x16) - this setting refers to multiple Intel FPGA families (including Stratix V, Arria V, and Cyclone V)
 set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "PASSIVE PARALLEL X16"
