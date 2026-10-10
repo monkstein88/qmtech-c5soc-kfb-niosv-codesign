@@ -449,10 +449,14 @@ integration model used here:
    - Altera Community discussion 337631.
    - The accepted Altera response states that Quartus 25.1 Standard supports
      QIP-only project integration for Nios V generated output.
-3. [Nios V Processor User Guide](https://docs.altera.com/r/docs/683632/25.1/nios-v-processor-user-guide)
-   - Official processor architecture, memory, debug, and software guidance.
-4. [Nios V Processor IP Core User Guide](https://docs.altera.com/r/docs/683632/25.1/nios-v-processor-ip-core-user-guide)
-   - Official Platform Designer IP configuration and interface guidance.
+3. [Nios V Processor Reference Manual](https://docs.altera.com/r/docs/683632/25.1/nios-v-processor-reference-manual)
+   - Altera document 683632, 25.1 edition.
+   - Official processor architecture, memory, interrupt, debug and control and
+     status register reference.
+4. [Nios V Processor Software Developer Handbook](https://docs.altera.com/r/docs/743810/25.1/nios-v-processor-software-developer-handbook)
+   - Altera document 743810, 25.1 edition.
+   - Official guide to the Nios V software flow used here: `niosv-bsp`,
+     `niosv-app`, the HAL and the BSP settings.
 5. [AN 985: Nios V Processor Tutorial](https://docs.altera.com/r/docs/784468/current/an-985-nios-v-processor-tutorial)
    - Altera application note, document 784468.
    - Official getting-started tutorial: builds a Nios V processor system in
