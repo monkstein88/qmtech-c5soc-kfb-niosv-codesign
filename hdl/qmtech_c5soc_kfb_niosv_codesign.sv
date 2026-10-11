@@ -12,8 +12,21 @@ module qmtech_c5soc_kfb_niosv_codesign(
   input    [ 1: 0]    KEY,
   // LED output(s) (active-high)
   output              LED,
-    // Toggle (DIP) Switches
+  // Toggle (DIP) Switches
   input    [ 3: 0]    DIPSW,
+  // HDMI TX (output) interface - TMDS (ADV7513 IC)
+  inout               HDMI_I2C_SCL,
+  inout               HDMI_I2C_SDA,
+  inout               HDMI_I2S,
+  inout               HDMI_LRCLK,
+  inout               HDMI_MCLK,
+  inout               HDMI_SCLK,
+  output              HDMI_TX_CLK,
+  output              HDMI_TX_DE,
+  output   [23: 0]    HDMI_TX_D,
+  output              HDMI_TX_HS,
+  input               HDMI_TX_INT,
+  output              HDMI_TX_VS,
   // ================= HPS ===================
   // SD-Card
   output              HPS_SD_CLK,
@@ -150,7 +163,7 @@ soc_system HPS_SOPC_INST(
   .hps_io_hps_io_uart0_inst_RX        (HPS_UART_RX),            //                        .hps_io_uart0_inst_RX
   .hps_io_hps_io_uart0_inst_TX        (HPS_UART_TX),            //                        .hps_io_uart0_inst_TX
 
-  // HPS-USB Partition
+  // HPS-USB (ULPI) Partition
   .hps_io_hps_io_usb1_inst_D0         (HPS_USB_DATA[0]),        //                        .hps_io_usb1_inst_D0
   .hps_io_hps_io_usb1_inst_D1         (HPS_USB_DATA[1]),        //                        .hps_io_usb1_inst_D1
   .hps_io_hps_io_usb1_inst_D2         (HPS_USB_DATA[2]),        //                        .hps_io_usb1_inst_D2
@@ -196,11 +209,26 @@ soc_system HPS_SOPC_INST(
   .hps_io_hps_io_gpio_inst_GPIO54     (HPS_KEY),                //                        .hps_io_gpio_inst_GPIO54
   .hps_io_hps_io_gpio_inst_GPIO53     (HPS_LED),                //                        .hps_io_gpio_inst_GPIO53
  
-  // FPGA Partition:
+  // FPGA-External I/O Partition:
   .button_pio_ext_export       (fpga_debounced_buttons), //   cv_soc_button_pio_ext.export
   .led_pio_ext_export          (fpga_led_internal),      //      cv_soc_led_pio_ext.export
   .dipsw_pio_ext_export        (dipsw_sync)              //    cv_soc_dipsw_pio_ext.export
 );
+
+// HDMI TX interface (ADV7513 IC) - this is not used at the moment.
+// Outputs held low, so the ADV7513 sees no video; bidirectional lines released.
+assign HDMI_I2C_SCL = 1'bz;
+assign HDMI_I2C_SDA = 1'bz;
+assign HDMI_I2S = 1'bz;
+assign HDMI_LRCLK = 1'bz;
+assign HDMI_MCLK = 1'bz;
+assign HDMI_SCLK = 1'bz;
+assign HDMI_TX_CLK = 1'b0;
+assign HDMI_TX_DE = 1'b0;
+assign HDMI_TX_D = '0;
+assign HDMI_TX_HS = 1'b0;
+// HDMI_TX_INT, (input) is not used, so it is left unconnected
+assign HDMI_TX_VS = 1'b0;
 
 // The FPGA-side Nios V runs from its own reset so that it starts right after
 // FPGA configuration and is not reset by HPS cold/warm/debug resets.

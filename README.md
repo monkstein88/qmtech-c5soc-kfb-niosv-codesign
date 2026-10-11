@@ -424,9 +424,20 @@ the JTAG UART and the PIOs.  An exported clock-source output driven again from
 - `constraints/timing_qmtech_c5soc_kfb_board.sdc` is the project SDC file.
 - `constraints/pinning_qmtech_c5soc_kfb_board.tcl` is the board pin reference.
   The assignments are stored in the QSF; after editing the script, re-apply it
-  with `quartus_sh -t constraints/pinning_qmtech_c5soc_kfb_board.tcl`.  The HPS
-  DDR3 pin assignments belong to the HPS SDRAM IP and are applied by the
-  generated `hps_sdram_p0_pin_assignments.tcl`.
+  with `quartus_sh -t constraints/pinning_qmtech_c5soc_kfb_board.tcl`.
+- The HPS DDR3 pins are dedicated HPS pins and need no location assignments.
+  Their I/O standard, termination and drive-strength assignments come from the
+  HPS SDRAM IP: the generated
+  `qsys/soc_system/synthesis/submodules/hps_sdram_p0_pin_assignments.tcl`
+  writes them into the QSF (tagged `__hps_sdram_p0`), where they are already
+  stored.  The script does not run as part of a compile; re-run it after
+  Analysis & Synthesis whenever the HPS memory settings in `soc_system.qsys`
+  change.  From `quartus/`:
+
+  ```sh
+  quartus_map qmtech_c5soc_kfb_niosv_codesign
+  quartus_sta -t ../qsys/soc_system/synthesis/submodules/hps_sdram_p0_pin_assignments.tcl qmtech_c5soc_kfb_niosv_codesign
+  ```
 
 ## Future work
 
