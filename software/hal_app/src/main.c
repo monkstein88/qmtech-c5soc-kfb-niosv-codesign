@@ -62,7 +62,7 @@ int main(void)
             report_inputs(dipsw, keys);
         }
 
-        alt_u32 half_period = (alt_ticks_per_second() / 2u) / (dipsw + 1u);
+        alt_u32 half_period = (alt_ticks_per_second() / 10u) / (dipsw + 1u);
         if (half_period == 0u) {
             half_period = 1u;
         }

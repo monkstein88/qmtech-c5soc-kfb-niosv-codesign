@@ -3,7 +3,7 @@
 # Machine generated for CPU 'cpu' in SOPC Builder design 'niosv_system'
 # SOPC Builder design path: ../../qsys/niosv_system.sopcinfo
 #
-# Generated: Sat Oct 03 22:50:29 EEST 2026
+# Generated: Sun Oct 11 23:56:09 EEST 2026
 
 # DO NOT MODIFY THIS FILE
 #

@@ -2,12 +2,12 @@
 <sch:Settings xmlns:sch="http://www.altera.com/embeddedsw/bsp/schema">
         <BspType>hal2</BspType>
         <BspVersion>default</BspVersion>
-        <BspGeneratedTimeStamp>Oct 3, 2026 10:50:29 PM</BspGeneratedTimeStamp>
-        <BspGeneratedUnixTimeStamp>1791057029235</BspGeneratedUnixTimeStamp>
+        <BspGeneratedTimeStamp>Oct 11, 2026 11:56:09 PM</BspGeneratedTimeStamp>
+        <BspGeneratedUnixTimeStamp>1791752169380</BspGeneratedUnixTimeStamp>
         <BspGeneratedLocation>/home/monklp/Documents/REPOS/GITHUB/__monkstein88__/qmtech-c5soc-kfb-niosv-codesign/software/hal_bsp</BspGeneratedLocation>
         <BspSettingsFile>/home/monklp/Documents/REPOS/GITHUB/__monkstein88__/qmtech-c5soc-kfb-niosv-codesign/software/hal_bsp/settings.bsp</BspSettingsFile>
         <SopcDesignFile>../../qsys/niosv_system.sopcinfo</SopcDesignFile>
-        <SystemFileHash>5cae7067fdc718976cccd8259d3cf28d87c72574b6deed36f8d1f8a2d9ebf4</SystemFileHash>
+        <SystemFileHash>6a5867977c7b39a4aae1c0cca02811a4126cdd69e7743d53b2cc30f53fc984</SystemFileHash>
         <JdiFile>default</JdiFile>
         <Cpu>cpu</Cpu>
         <SchemaVersion>1.9</SchemaVersion>
